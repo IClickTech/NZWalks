@@ -28,25 +28,74 @@ namespace NZWalks.API.Controllers
         {
             var regionsDomain = await regionRepository.GetAllAsync();
 
-            var regionsDto = mapper.Map<List<RegionDto>>(regionsDomain);
-
-            //var regionsDto = new List<RegionDto>();            
-            //foreach (var region in regionsDomain)
-            //{
-            //    regionsDto.Add(new RegionDto()
-            //    {
-            //        Id = region.Id,
-            //        Code = region.Code,
-            //        Name = region.Name,                    
-            //        Area = region.Area,
-            //        Lat = region.Lat,
-            //        Long = region.Long,
-            //        Population = region.Population
-            //    });
-            //}
+            var regionsDto = mapper.Map<List<RegionDto>>(regionsDomain);            
 
             return Ok(regionsDto);
         }
-        
+
+        [HttpGet]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> GetRegion([FromRoute]Guid id)
+        {
+            var regionDomain = await regionRepository.GetAsync(id);
+
+            if(regionDomain == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(mapper.Map<RegionDto>(regionDomain));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddRegion([FromForm] RegionAdd regionAdd)
+        {
+            var region = mapper.Map<Region>(regionAdd);
+
+            region.Id = Guid.NewGuid();
+
+            region = await regionRepository.AddAsync(region);
+
+            var regionDto = mapper.Map<RegionDto>(region);
+
+            //return Ok(regionDto);
+
+            return CreatedAtAction(nameof(GetRegion), new {id= regionDto.Id }, regionDto);
+        }
+
+        [HttpPut]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> UpdateResult([FromRoute] Guid id,[FromBody] RegionUpdate regionUpdate)
+        {
+            var regionDomain = mapper.Map<Region>(regionUpdate);
+
+            regionDomain = await regionRepository.UpdateAsync(id, regionDomain);
+
+            if(regionDomain == null)
+            {
+                return NotFound();
+            }
+
+            var regionDto = mapper.Map<RegionDto> (regionDomain);
+
+            return Ok(regionDto);
+        }
+
+
+        [HttpDelete]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> DeleteRegion([FromRoute] Guid id)
+        {
+            var region = await regionRepository.DeleteAsync(id);
+
+            if (region == null)
+            {
+                return NotFound();
+            }
+
+            var regionDto = mapper.Map<RegionDto> (region);
+
+            return Ok(regionDto);
+        }
     }
 }
